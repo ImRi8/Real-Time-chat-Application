@@ -9,21 +9,21 @@ const rl = readline.createInterface({
   prompt: 'You: ',
 });
 
+let lastSentMessage = '';  // Stores last message for ack tick
+
 // Print a message and restore the prompt, with color
 function printMessage(msg, userId) {
-  process.stdout.clearLine();
+  process.stdout.clearLine(0);
   process.stdout.cursorTo(0);
   if (msg.from === userId) {
-    // Sent message: white
     console.log(chalk.white(`You: ${msg.message}`));
   } else {
-    // Received message: green
     console.log(chalk.green(`${msg.from}: ${msg.message}`));
   }
-  rl.prompt();
+  rl.prompt(true);
 }
 
-// Fetch and display chat history as plain text (no color, no prompt)
+// Optional: Fetch and show history
 async function fetchAndShowHistory(userId, recipientId) {
   try {
     const res = await axios.get(`http://localhost:3000/messages?user1=${userId}&user2=${recipientId}`);
@@ -66,7 +66,7 @@ async function fetchAndShowHistory(userId, recipientId) {
         process.exit(1);
       }
       connected = true;
-      process.stdout.clearLine();
+      process.stdout.clearLine(0);
       process.stdout.cursorTo(0);
       console.log(`\n[Connected as ${userId}]`);
       // await fetchAndShowHistory(userId, recipientId);
@@ -74,22 +74,19 @@ async function fetchAndShowHistory(userId, recipientId) {
       rl.prompt();
     });
 
-    // Only print received messages if from someone else
     socket.on('message', (msg) => {
-      if (msg.from !== userId) {
-        printMessage(msg, userId);
-      }
+      printMessage(msg, userId);
     });
 
     socket.on('disconnect', () => {
       connected = false;
-      process.stdout.clearLine();
+      process.stdout.clearLine(0);
       process.stdout.cursorTo(0);
       console.log('\n[Disconnected from server. Attempting to reconnect...]');
     });
 
     socket.on('connect_error', (err) => {
-      process.stdout.clearLine();
+      process.stdout.clearLine(0);
       process.stdout.cursorTo(0);
       console.log(`\n[Connection error: ${err.message}]`);
       process.exit(1);
@@ -104,18 +101,23 @@ async function fetchAndShowHistory(userId, recipientId) {
       rl.prompt();
       return;
     }
+
     if (message === '/exit') {
       rl.close();
       if (socket) socket.disconnect();
       process.exit(0);
     }
-    // Only print sent message after server acknowledgment
+
+    lastSentMessage = message;
+
+    // Send message — display will be handled via server's message echo
     socket.emit('message', { to: recipientId, message }, (ack) => {
       if (ack && ack.status === 'ok') {
-        printMessage({ from: userId, to: recipientId, message }, userId);
-      } else {
-        console.log('Message not acknowledged by server.');
-        rl.prompt();
+        // Move up and add tick
+        readline.moveCursor(process.stdout, 0, -1); // Move up one line
+        readline.clearLine(process.stdout, 0);      // Clear that line
+        console.log(chalk.white(`You: ${lastSentMessage} ✔`));
+        rl.prompt(true);
       }
     });
   });

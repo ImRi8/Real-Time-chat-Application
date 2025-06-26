@@ -13,7 +13,7 @@
 
 ### 3. Message Acknowledgment
 - Every message sent receives an acknowledgment from the server after it is stored and delivered/buffered.
-- The client only prints the sent message after receiving this acknowledgment.
+- **In the CLI, a tick sign (✔) appears next to your message after the server acknowledges it, indicating successful delivery/buffering.**
 
 ### 4. Chat History Retrieval
 - A REST API endpoint (`GET /messages?user1=A&user2=B`) returns the full chat history between two users.
@@ -67,6 +67,7 @@ node client.js
   - Enter userId: `B`
   - Enter recipient userId: `A`
 - Type messages in either terminal. Messages will appear in real time in the other user's terminal.
+- **When you send a message, a tick sign (✔) will appear next to your message after the server acknowledges it.**
 
 ### 2. Handling Disconnection and Reconnection
 - In one terminal, close the client (press `Ctrl+C` or type `/exit`).
@@ -80,6 +81,26 @@ node client.js
 curl "http://localhost:3000/messages?user1=A&user2=B"
 ```
 - This will return the full chat history between users `A` and `B` as a JSON array.
+
+---
+
+## Unit Testing & Coverage
+
+### Running the Test Suite
+- The project uses **Jest** for unit testing and coverage.
+- To run all tests and see a coverage report:
+```
+npm test
+```
+- This will run all tests in the `__tests__/` directory and display coverage for all files.
+
+### Coverage Details
+- The test suite covers all core modules, including:
+  - In-memory data store (`chatStore.js`)
+  - Service layer (`messageService.js`)
+  - Controller layer (`messageController.js`)
+  - Logger utility (`logger.js`)
+- Coverage includes message storage, retrieval, buffering, connection management, and REST API endpoints.
 
 ---
 
